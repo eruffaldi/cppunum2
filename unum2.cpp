@@ -148,7 +148,6 @@ template <class T, int... exacts>
 constexpr Punum<T,exacts...> inv(Punum<T,exacts...> x) { return ~x; }
 
 // Bound object [first..last] or everything or empty
-// TODO check being of the same unum
 template <class APunum>
 class Pbound
 {
@@ -163,13 +162,13 @@ class Pbound
 	constexpr bool iseverything() const;// TBD
 	constexpr bool issingle() const { return !empty_ && first == last; }
 	constexpr bool isexact() const { return issingle() && first.isexact(); }
-	static constexpr Pbound zero()  ;
-	static constexpr Pbound one()  ;
+	static constexpr Pbound zero()  const { return Pbound(APunum::zero()); }
+	static constexpr Pbound one()   const { return Pbound(APunum::one()); }
 	static constexpr Pbound everything() { return Pbound(APunum::zero(),APunum::zero().prev()); }
 	static constexpr Pbound empty() { return Pbound(); }
 	constexpr Pbound inv() const { return isempty() ? *this : Pbound(~last,~first); }
 	constexpr Pbound neg() const { return isempty() ? *this : Pbound(-last,-first); }
-	constexpr Pbound complement() const { if(empty_) return everything(); else if(iseverything()) return empty(); else return Pbound(last.next(),first.prev()); }
+	constexpr Pbound complement() const { return empty_ ? everything() : iseverything() ? empty() : Pbound(last.next(),first.prev()); }
 
 	constexpr APunum operator-(const APunum & other) const { return (*this) + (-other); }  // uses +
 	constexpr APunum operator/(const APunum & other) const { return (*this) * other.inv(); } // uses *
@@ -187,7 +186,6 @@ class Pbound
 	// ^
 	// exp
 
-	// TODO: operations over the closed interval based on reduction
 
 };
 
