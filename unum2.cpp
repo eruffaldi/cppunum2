@@ -58,7 +58,7 @@ public:
 	// conversion
 
 	// TODO max
-		
+
 	static Punum convert(float x); 
 	static Punum convert(int x); 
 	template<std::intmax_t N,std::intmax_t D>
@@ -141,8 +141,11 @@ constexpr Punum<T,exacts...> convert(std::ratio<N,D> x)
 
 
 // functionals if needed
-//template <class T, int... exacts>
-//constexpr Punum<T,exacts...> neg(Punum<T,exacts...> x) { return x.neg(); }
+template <class T, int... exacts>
+constexpr Punum<T,exacts...> neg(Punum<T,exacts...> x) { return -x; }
+
+template <class T, int... exacts>
+constexpr Punum<T,exacts...> inv(Punum<T,exacts...> x) { return ~x; }
 
 // Bound object [first..last] or everything or empty
 // TODO check being of the same unum
@@ -160,16 +163,16 @@ class Pbound
 	constexpr bool iseverything() const;// TBD
 	constexpr bool issingle() const { return !empty_ && first == last; }
 	constexpr bool isexact() const { return issingle() && first.isexact(); }
-	static constexpr Pbound zero() const ;
-	static constexpr Pbound one() const ;
-	static constexpr Pbound everything() const;
-	static constexpr Pbound empty();
-	constexpr Pbound inv() const;
-	constexpr Pbound neg() const;
+	static constexpr Pbound zero()  ;
+	static constexpr Pbound one()  ;
+	static constexpr Pbound everything() { return Pbound(APunum::zero(),APunum::zero().prev()); }
+	static constexpr Pbound empty() { return Pbound(); }
+	constexpr Pbound inv() const { return isempty() ? *this : Pbound(~last,~first); }
+	constexpr Pbound neg() const { return isempty() ? *this : Pbound(-last,-first); }
 	constexpr Pbound complement() const { if(empty_) return everything(); else if(iseverything()) return empty(); else return Pbound(last.next(),first.prev()); }
 
-	constexpr Punum operator-(const Punum & other) const { return (*this) + (-other); }  // uses +
-	constexpr Punum operator/(const Punum & other) const { return (*this) * other.inv(); } // uses *
+	constexpr APunum operator-(const APunum & other) const { return (*this) + (-other); }  // uses +
+	constexpr APunum operator/(const APunum & other) const { return (*this) * other.inv(); } // uses *
 
 	// in
 	// intersect
@@ -183,8 +186,6 @@ class Pbound
 	// ==
 	// ^
 	// exp
-	static constexpr Pbound empty() { return Pbound(); }
-	static constexpr Pbound everything() { return Pbound(APunum::zero(),APunum::zero().prev()); }
 
 	// TODO: operations over the closed interval based on reduction
 
