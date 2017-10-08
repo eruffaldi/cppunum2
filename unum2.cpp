@@ -42,7 +42,7 @@ public:
 
 	constexpr Punum operator+(const Punum & other) const { return *this; } // TBD
 	constexpr Punum operator*(const Punum & other) const { return *this; } // TBD
-
+	
 	// slowproduct
 
 	// slowsum
@@ -56,14 +56,89 @@ public:
 	// exp
 
 	// conversion
+
+	// TODO max
+		
 	static Punum convert(float x); 
 	static Punum convert(int x); 
+	template<std::intmax_t N,std::intmax_t D>
+	static constexpr Punum convert(std::ratio<N,D> r);
 	// MAYBE some fraction class or constant time rational from C++11
 	//static Punum convert(rationa); // http://en.cppreference.com/w/cpp/numeric/ratio
 private:
 	explicit Punum(int x) : v(x) {} // MAYBE private
 
 };
+
+#if 0
+template <class T, int... exacts>
+template<std::intmax_t N,std::intmax_t D>
+constexpr Punum<T,exacts...> convert(std::ratio<N,D> x)
+{
+	if(x.num == 0)
+		return zero();
+	else if(x.num < 0)
+		return -convert(td::ratio<-N,D>());
+	int lo = 0;
+	int hi = N;
+	if (x.num < x.den)
+	{
+		while(true)
+		{
+            auto mid = lo + ((hi - lo) >> 1);
+            if (mid == lo || mid == hi)
+                break;
+           	// inv(etable[mid]) > x
+           	if(values[mid]*x.den > x.num)
+           	{
+	           	lo = mid;
+	        }
+           	else
+           	{
+           		hi = mid;
+           	}
+		}
+        if (lo >= 0 && x.num == x.den*values[lo])
+            return inv(fromexactsindex(lo)); // FIX
+        else if (hi < N && x.num == x.den*values[hi]) // FIX as in the loop
+            return inv(fromexactsindex(hi)); // FIX
+        else if (lo == 0):
+         return one().prev();
+        else if hi >= N:
+            return zero().next();
+        else
+            return inv((fromexactsindex(lo).next())); // FIX
+	}
+	else
+	{
+		while(true)
+		{
+            auto mid = lo + ((hi - lo) >> 1);
+            if (mid == lo || mid == hi)
+                break;
+           	if(values[mid]*x.den < x.num)
+           	{
+	           	lo = mid;
+	        }
+           	else
+           	{
+           		hi = mid;
+           	}
+		}	
+        if (lo >= 0 && (etable[lo]*x.den == x.num))
+            return fromexactsindex(lo);
+        else if (hi < N && (etable[hi]x.den == x.num))
+            return (fromexactsindex(hi));
+        else if (lo == 0):
+         	return one().next();
+        else if hi >= N:
+            return inf().prev();
+        else
+            return fromexactsindex(lo).next();
+	}
+}
+#endif
+
 
 // functionals if needed
 //template <class T, int... exacts>
@@ -83,8 +158,31 @@ class Pbound
 
 	constexpr bool isempty() const  { return empty_; }
 	constexpr bool iseverything() const;// TBD
-	constexpr bool isone() const { return !empty_ && first == last; }
+	constexpr bool issingle() const { return !empty_ && first == last; }
+	constexpr bool isexact() const { return issingle() && first.isexact(); }
+	static constexpr Pbound zero() const ;
+	static constexpr Pbound one() const ;
+	static constexpr Pbound everything() const;
+	static constexpr Pbound empty();
+	constexpr Pbound inv() const;
+	constexpr Pbound neg() const;
+	constexpr Pbound complement() const { if(empty_) return everything(); else if(iseverything()) return empty(); else return Pbound(last.next(),first.prev()); }
 
+	constexpr Punum operator-(const Punum & other) const { return (*this) + (-other); }  // uses +
+	constexpr Punum operator/(const Punum & other) const { return (*this) * other.inv(); } // uses *
+
+	// in
+	// intersect
+	// shortestcover
+	// outer when operation is CONVEX
+	// finiteplus
+	// +
+	// -
+	// *
+	// /
+	// ==
+	// ^
+	// exp
 	static constexpr Pbound empty() { return Pbound(); }
 	static constexpr Pbound everything() { return Pbound(APunum::zero(),APunum::zero().prev()); }
 
