@@ -21,6 +21,7 @@ public:
 	constexpr Punum abs()  const { return isstrictlynegative() ? -(*this): *this; }  // could be >= infinity because infinity is sign symmetric
 	constexpr Punum neg()  const { return Punum(-v); }; 
 	constexpr Punum inv()  const { return Punum(-(v+(N2 >> 1))); }
+
 	constexpr bool isinf() const { return v == (N2>>1); }
 	constexpr bool iszero() const { return v == 0; }
 	constexpr bool isone() const { return v == (N2>>2); }
@@ -57,14 +58,14 @@ public:
 
 	// conversion
 
-	// TODO max
+	// max
 
 	static Punum convert(float x); 
 	static Punum convert(int x); 
+	
 	template<std::intmax_t N,std::intmax_t D>
 	static constexpr Punum convert(std::ratio<N,D> r);
-	// MAYBE some fraction class or constant time rational from C++11
-	//static Punum convert(rationa); // http://en.cppreference.com/w/cpp/numeric/ratio
+
 private:
 	explicit Punum(int x) : v(x) {} // MAYBE private
 
@@ -159,19 +160,27 @@ class Pbound
 	Pbound(APunum ax) : first(ax) ,last(ax),empty_(false) {}
 
 	constexpr bool isempty() const  { return empty_; }
-	constexpr bool iseverything() const;// TBD
+	constexpr bool iseverything() const { return !empty_ && first == last.next(); }
 	constexpr bool issingle() const { return !empty_ && first == last; }
 	constexpr bool isexact() const { return issingle() && first.isexact(); }
-	static constexpr Pbound zero()  const { return Pbound(APunum::zero()); }
-	static constexpr Pbound one()   const { return Pbound(APunum::one()); }
+	constexpr bool iszero() const { return !empty_ && first.iszero(); }
+	constexpr bool isone() const { return !empty_ && first.isone(); }
+	constexpr bool isinf() const { return !empty_ && first.isinf(); }
+
+	static constexpr Pbound zero()   { return Pbound(APunum::zero()); }
+	static constexpr Pbound one()    { return Pbound(APunum::one()); }
+	static constexpr Pbound inf()    { return Pbound(APunum::inf()); }
 	static constexpr Pbound everything() { return Pbound(APunum::zero(),APunum::zero().prev()); }
 	static constexpr Pbound empty() { return Pbound(); }
 	constexpr Pbound inv() const { return isempty() ? *this : Pbound(~last,~first); }
 	constexpr Pbound neg() const { return isempty() ? *this : Pbound(-last,-first); }
 	constexpr Pbound complement() const { return empty_ ? everything() : iseverything() ? empty() : Pbound(last.next(),first.prev()); }
 
-	constexpr APunum operator-(const APunum & other) const { return (*this) + (-other); }  // uses +
-	constexpr APunum operator/(const APunum & other) const { return (*this) * other.inv(); } // uses *
+	constexpr Pbound operator-(const Pbound & other) const { return (*this) + (-other); }  // uses +
+	constexpr Pbound operator/(const Pbound & other) const { return (*this) * other.inv(); } // uses *
+
+	constexpr Pbound operator+(const Pbound & other) const { return *this; } // TBD
+	constexpr Pbound operator*(const Pbound & other) const { return *this; } // TBD
 
 	// in
 	// intersect
@@ -179,13 +188,12 @@ class Pbound
 	// outer when operation is CONVEX
 	// finiteplus
 	// +
-	// -
 	// *
-	// /
 	// ==
 	// ^
 	// exp
-
+	// sqrt
+	// maximum
 
 };
 
@@ -197,5 +205,6 @@ int main(int argc, char const *argv[])
 	using Q=int [inv(X::one().next()/X::one()).v];
 	std::cout << sizeof(X::values) << " " << X::N << " " << X::N2 << " " << X::MASK << " valuetest " << sizeof(Q) << std::endl;
 
+	std::cout << sizeof(Pbound<X>) << std::endl;
 	return 0;
 }
